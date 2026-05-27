@@ -30,3 +30,12 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# Packed outputs
+gophercram-output.*
+repomix-output.*
+/.tmp/
+
+# Compiled binary
+/gophercram
+/gophercram.exe
