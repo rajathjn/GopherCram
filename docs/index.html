@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GopherCram — pack a repository into a single AI-friendly file</title>
+  <meta name="description" content="GopherCram is a zero-dependency Go CLI that packs a repository into a single file you can hand to a language model." />
+  <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='80'>📦</text></svg>" />
+  <style>
+    :root {
+      --bg: #0d1117;
+      --bg-elev: #161b22;
+      --bg-elev-2: #1c232c;
+      --fg: #e6edf3;
+      --fg-dim: #9aa6b2;
+      --accent: #79c0ff;
+      --accent-2: #a5d6ff;
+      --highlight: #d2a8ff;
+      --good: #56d364;
+      --warn: #d29922;
+      --border: #30363d;
+      --code-bg: #0b1320;
+      --maxw: 1080px;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #ffffff;
+        --bg-elev: #f6f8fa;
+        --bg-elev-2: #eef1f4;
+        --fg: #1f2328;
+        --fg-dim: #58606a;
+        --accent: #0969da;
+        --accent-2: #0550ae;
+        --highlight: #8250df;
+        --good: #1a7f37;
+        --warn: #9a6700;
+        --border: #d0d7de;
+        --code-bg: #f0f3f6;
+      }
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code, pre, kbd {
+      font-family: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+    }
+    code { background: var(--code-bg); padding: 1px 6px; border-radius: 4px; font-size: 0.92em; }
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 18px;
+      overflow-x: auto;
+      font-size: 0.92em;
+      line-height: 1.55;
+    }
+    pre code { background: transparent; padding: 0; }
+    .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+
+    /* Hero */
+    header.hero {
+      padding: 80px 0 64px;
+      background:
+        radial-gradient(900px 400px at 80% -10%, rgba(165, 214, 255, 0.12), transparent),
+        radial-gradient(700px 360px at -10% 120%, rgba(210, 168, 255, 0.10), transparent),
+        var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+    .hero .badge {
+      display: inline-flex; gap: 8px; align-items: center;
+      padding: 4px 12px;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 0.82em;
+      color: var(--fg-dim);
+      margin-bottom: 20px;
+    }
+    .hero h1 {
+      margin: 0 0 14px;
+      font-size: 64px;
+      line-height: 1.05;
+      letter-spacing: -1.4px;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--accent), var(--highlight));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .hero p.lead {
+      font-size: 1.18rem;
+      color: var(--fg-dim);
+      max-width: 720px;
+      margin: 0 0 28px;
+    }
+    .cta {
+      display: inline-flex; gap: 12px; flex-wrap: wrap;
+      align-items: center;
+    }
+    .button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 8px;
+      background: var(--accent);
+      color: #0d1117;
+      font-weight: 600;
+      border: 1px solid transparent;
+      transition: filter .12s ease, transform .12s ease;
+    }
+    .button:hover { filter: brightness(1.08); text-decoration: none; }
+    .button.secondary {
+      background: transparent;
+      color: var(--fg);
+      border-color: var(--border);
+    }
+    .button.secondary:hover { background: var(--bg-elev); }
+
+    /* Cards */
+    .features {
+      padding: 64px 0;
+    }
+    .features h2 {
+      font-size: 1.7rem;
+      margin: 0 0 32px;
+      letter-spacing: -0.4px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
+    }
+    .card {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 22px;
+    }
+    .card h3 {
+      margin: 0 0 8px;
+      font-size: 1.05rem;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card h3 .glyph {
+      width: 28px; height: 28px;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--bg-elev-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.95rem;
+    }
+    .card p { margin: 0; color: var(--fg-dim); font-size: 0.95rem; }
+
+    /* Sections */
+    section { padding: 56px 0; border-top: 1px solid var(--border); }
+    section h2 { font-size: 1.7rem; margin: 0 0 18px; letter-spacing: -0.4px; }
+    section p.lead { color: var(--fg-dim); max-width: 760px; margin: 0 0 26px; }
+    section ul { padding-left: 1.2em; }
+    section li { margin: 4px 0; }
+
+    /* Side-by-side compare */
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    .compare > div {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+    }
+    .compare h4 { margin: 0 0 8px; font-size: 0.92rem; color: var(--fg-dim); }
+    .compare pre { margin: 0; }
+
+    /* CLI demo */
+    .terminal {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+      font-family: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+      font-size: 0.92em;
+      overflow-x: auto;
+    }
+    .terminal .prompt { color: var(--good); }
+    .terminal .arg    { color: var(--accent-2); }
+    .terminal .out    { color: var(--fg-dim); }
+
+    /* Footer */
+    footer {
+      padding: 28px 0 42px;
+      color: var(--fg-dim);
+      font-size: 0.92rem;
+      border-top: 1px solid var(--border);
+    }
+    footer .row { display: flex; flex-wrap: wrap; gap: 18px; justify-content: space-between; }
+
+    @media (max-width: 720px) {
+      .hero h1 { font-size: 44px; }
+      .compare { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap">
+      <div class="badge">
+        📦 v0.1.0 · Go 1.26 · zero deps
+      </div>
+      <h1>GopherCram</h1>
+      <p class="lead">
+        A small Go CLI that packs a software repository into a single AI-friendly
+        file — XML, Markdown, JSON, or plain text — with a gitignore-aware walker,
+        an embedded secret scanner, an approximate token counter, and built-in
+        remote-repo cloning.
+      </p>
+      <div class="cta">
+        <a class="button" href="https://github.com/rajathjn/GopherCram">View on GitHub</a>
+        <a class="button secondary" href="usage.md">Usage guide</a>
+        <a class="button secondary" href="configuration.md">Configuration</a>
+        <a class="button secondary" href="cli-reference.md">CLI reference</a>
+      </div>
+    </div>
+  </header>
+
+  <section class="features">
+    <div class="wrap">
+      <h2>What's in the box</h2>
+      <div class="grid">
+        <div class="card">
+          <h3><span class="glyph">📁</span> Smart traversal</h3>
+          <p>Default ignore patterns plus per-directory <code>.gitignore</code>,
+            <code>.ignore</code>, and <code>.gophercramignore</code> rules, all
+            merged with last-match-wins semantics.</p>
+        </div>
+        <div class="card">
+          <h3><span class="glyph">🧾</span> Four output styles</h3>
+          <p>XML (CDATA-wrapped), Markdown (fenced blocks with language hints),
+            JSON (stable shape, easy to post-process), and plain text.</p>
+        </div>
+        <div class="card">
+          <h3><span class="glyph">🔐</span> Secret scanner</h3>
+          <p>Regex-driven detection of AWS, GitHub, Stripe, Slack, Google, JWT,
+            PEM, and connection-string secrets — with entropy-based false-positive
+            filtering.</p>
+        </div>
+        <div class="card">
+          <h3><span class="glyph">🧮</span> Token estimator</h3>
+          <p>Calibrated against GPT-4 tokenizers; matches <code>tiktoken</code>
+            within ~6% on the bundled fixture without shipping a vocabulary
+            file.</p>
+        </div>
+        <div class="card">
+          <h3><span class="glyph">✂️</span> Comment + body strip</h3>
+          <p>Language-aware comment lexers for C-style, hash, Lua, SQL, and XML
+            comments. Optional compression keeps signatures and drops function
+            bodies for skim-only context.</p>
+        </div>
+        <div class="card">
+          <h3><span class="glyph">🌐</span> Remote clone</h3>
+          <p>Pass <code>--remote owner/repo</code> or any clone URL; GopherCram
+            clones into a temp dir, packs, and cleans up after itself.</p>
+        </div>
+        <div class="card">
+          <h3><span class="glyph">📈</span> Git-aware</h3>
+          <p>Sort files by change frequency, append working-tree / staged diffs,
+            and embed a recent commit log.</p>
+        </div>
+        <div class="card">
+          <h3><span class="glyph">📦</span> Split output</h3>
+          <p>Chunk the packed file at a configured size cap
+            (<code>--split-output 2mb</code>) when you need to ship it through
+            size-limited channels.</p>
+        </div>
+        <div class="card">
+          <h3><span class="glyph">🐹</span> Pure Go stdlib</h3>
+          <p>No third-party dependencies. One static binary, no surprises.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>Install</h2>
+      <p class="lead">Pre-built binaries are not shipped yet — build from source:</p>
+      <div class="terminal">
+        <div><span class="prompt">$</span> git clone <span class="arg">https://github.com/rajathjn/GopherCram.git</span></div>
+        <div><span class="prompt">$</span> cd GopherCram</div>
+        <div><span class="prompt">$</span> go build <span class="arg">-o gophercram ./</span></div>
+        <div class="out"># puts the static binary at ./gophercram</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>30-second tour</h2>
+      <div class="terminal">
+        <div><span class="prompt">$</span> gophercram</div>
+        <div class="out">GopherCram v0.1.0 — packing 1 root(s)</div>
+        <div class="out">wrote /repo/gophercram-output.xml</div>
+        <div class="out">Summary:</div>
+        <div class="out">&nbsp;&nbsp;files:&nbsp;&nbsp;&nbsp;38</div>
+        <div class="out">&nbsp;&nbsp;chars:&nbsp;&nbsp;&nbsp;140172</div>
+        <div class="out">&nbsp;&nbsp;tokens:&nbsp;&nbsp;~66356</div>
+        <div class="out">&nbsp;&nbsp;bytes:&nbsp;&nbsp;&nbsp;140212 (136.93 KB)</div>
+        <div class="out"> </div>
+        <div><span class="prompt">$</span> gophercram <span class="arg">--style markdown --output context.md src/ docs/</span></div>
+        <div><span class="prompt">$</span> gophercram <span class="arg">--remote owner/repo --remote-branch main</span></div>
+        <div><span class="prompt">$</span> gophercram <span class="arg">--stdout --remove-comments --compress</span> | pbcopy</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>How it looks</h2>
+      <div class="compare">
+        <div>
+          <h4>XML output</h4>
+<pre><code>&lt;gophercram&gt;
+  &lt;summary&gt;
+    &lt;producer&gt;GopherCram v0.1.0&lt;/producer&gt;
+    &lt;stats files="38" tokens="66356"/&gt;
+  &lt;/summary&gt;
+  &lt;directory_structure&gt;&lt;![CDATA[
+src/
+  api/
+    users.ts
+    products.ts
+  utils/
+    format.ts
+]]&gt;&lt;/directory_structure&gt;
+  &lt;files&gt;
+    &lt;file path="src/api/users.ts"&gt;
+      &lt;![CDATA[ ...content... ]]&gt;
+    &lt;/file&gt;
+  &lt;/files&gt;
+&lt;/gophercram&gt;</code></pre>
+        </div>
+        <div>
+          <h4>Markdown output</h4>
+<pre><code># GopherCram Output
+
+&gt; Packed by **GopherCram** v0.1.0
+
+| Metric | Value |
+|---|---|
+| Files | 38 |
+| Tokens (approx) | 66356 |
+
+## Files
+
+### `src/api/users.ts`
+
+```ts
+export async function fetchUsers() { ... }
+```
+</code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>Configuration in one file</h2>
+      <p class="lead">
+        Run <code>gophercram --init</code> to drop a defaulted config in your
+        project root. Every field is optional; omitted fields inherit the
+        defaults.
+      </p>
+<pre><code>{
+  "$schema": "https://gophercram.dev/schema.json",
+  "input": { "maxFileSize": 52428800 },
+  "output": {
+    "filePath": "gophercram-output.xml",
+    "style": "xml",
+    "fileSummary": true,
+    "directoryStructure": true,
+    "files": true,
+    "topFilesLength": 5,
+    "git": {
+      "sortByChanges": true,
+      "sortByChangesMaxCommits": 100,
+      "includeLogsCount": 50
+    }
+  },
+  "include": [],
+  "ignore": {
+    "useGitignore": true,
+    "useDotIgnore": true,
+    "useDefaultPatterns": true,
+    "customPatterns": []
+  },
+  "security": { "enableSecurityCheck": true },
+  "tokenCount": { "encoding": "approx" }
+}</code></pre>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>Testing &amp; comparison</h2>
+      <p class="lead">
+        The repository ships a synthetic TypeScript fixture
+        (<code>test/fixtures/dummy-ts-repo</code>) plus an opt-in integration
+        suite that runs <code>npx repomix</code> on the same fixture and
+        cross-checks the file list and token totals.
+      </p>
+      <div class="terminal">
+        <div><span class="prompt">$</span> go test <span class="arg">./...</span></div>
+        <div class="out">ok  internal/cli         0.546s</div>
+        <div class="out">ok  internal/config      1.870s</div>
+        <div class="out">ok  internal/fileselect  0.977s</div>
+        <div class="out">ok  internal/security    4.204s</div>
+        <div class="out">…</div>
+        <div> </div>
+        <div><span class="prompt">$</span> GOPHERCRAM_INTEGRATION=1 go test <span class="arg">./test/integration/... -v</span></div>
+        <div class="out">PASS: TestCompare_FileCoverage</div>
+        <div class="out">PASS: TestCompare_TokenCountSimilar (ratio 1.06)</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>Docs</h2>
+      <ul>
+        <li><a href="usage.md">Usage guide</a> — common workflows.</li>
+        <li><a href="configuration.md">Configuration reference</a> — every field, every default.</li>
+        <li><a href="cli-reference.md">CLI reference</a> — every flag.</li>
+        <li><a href="architecture.md">Architecture overview</a> — how the pipeline fits together.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap row">
+      <div>© 2026 GopherCram contributors · MIT-licensed</div>
+      <div>
+        <a href="https://github.com/rajathjn/GopherCram">GitHub</a> ·
+        <a href="https://github.com/rajathjn/GopherCram/issues">Issues</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
