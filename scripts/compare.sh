@@ -12,16 +12,16 @@
 #   - npx (to invoke repomix)
 #   - jq (optional; used for prettier comparison; falls back to grep otherwise)
 #
-# Usage: ./test/integration/compare.sh
+# Usage: ./scripts/compare.sh
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 FIXTURE="$ROOT_DIR/test/fixtures/dummy-ts-repo"
 WORK="$(mktemp -d -t gophercram-compare.XXXXXX)"
 trap 'rm -rf "$WORK"' EXIT
 
 echo "--> building gophercram"
-go -C "$ROOT_DIR" build -o "$WORK/gophercram" ./
+go -C "$ROOT_DIR" build -o "$WORK/gophercram" ./cmd/gophercram
 
 run_gc() {
   local style="$1" out="$2"

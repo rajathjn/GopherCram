@@ -7,7 +7,9 @@ shape of the codebase so contributors know where to look first.
 
 ```
 GopherCram/
-├── main.go                      # process entry point
+├── cmd/
+│   └── gophercram/              # process entry point (package main)
+│       └── main.go
 ├── internal/
 │   ├── cli/                     # arg parsing, run loop, help, init action
 │   ├── config/                  # config schema, defaults, loader, merge
@@ -20,6 +22,7 @@ GopherCram/
 │   ├── gitops/                  # `git` subprocess wrappers and URL parsing
 │   └── pack/                    # orchestration: pipeline glue + disk writer
 ├── docs/                        # documentation (you are here)
+├── scripts/                     # developer scripts (e.g. compare.sh)
 └── test/
     ├── fixtures/dummy-ts-repo/  # synthetic TypeScript fixture
     └── integration/             # compare against npx repomix
@@ -132,7 +135,7 @@ within a few percent without shipping a vocabulary file.
   bundled fixture and assert on its output. A second set, gated on
   `GOPHERCRAM_INTEGRATION=1`, additionally invokes `npx repomix` and
   cross-checks the file list and token total.
-- **Comparison harness** (`test/integration/compare.sh`) is a bash
+- **Comparison harness** (`scripts/compare.sh`) is a bash
   script that side-by-side packs the fixture with both tools across
   every output style, printing a summary of file inclusion/exclusion
   and byte counts.

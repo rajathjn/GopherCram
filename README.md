@@ -34,7 +34,7 @@ by repomix, but built from the ground up in idiomatic Go.
 ```bash
 git clone https://github.com/rajathjn/GopherCram.git
 cd GopherCram
-go build -o gophercram ./
+go build -o gophercram ./cmd/gophercram
 ```
 
 The single static binary is around 6 MB; drop it on your PATH.
@@ -96,7 +96,7 @@ go test -cover ./...
 GOPHERCRAM_INTEGRATION=1 go test ./test/integration/... -v
 
 # Side-by-side bash harness
-./test/integration/compare.sh
+./scripts/compare.sh
 ```
 
 The bundled fixture in [`test/fixtures/dummy-ts-repo`](test/fixtures/dummy-ts-repo)
